@@ -1,0 +1,95 @@
+<mxfile host="app.diagrams.net" agent="Claude Code" version="24.0.0">
+  <diagram id="dream-architecture" name="Architecture">
+    <mxGraphModel dx="1200" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <mxCell id="client" value="Client&#xa;(Swagger UI / curl)" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#f5f5f5;strokeColor=#666666;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="500" y="20" width="160" height="50" as="geometry" />
+        </mxCell>
+
+        <mxCell id="docker" value="docker compose (project: dream)" style="rounded=1;whiteSpace=wrap;html=0;dashed=1;fillColor=none;strokeColor=#888888;verticalAlign=top;align=left;spacingLeft=10;fontStyle=2;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="220" y="100" width="860" height="560" as="geometry" />
+        </mxCell>
+
+        <mxCell id="cards" value="cards service  :8080" style="swimlane;whiteSpace=wrap;html=0;startSize=30;rounded=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="240" y="130" width="300" height="300" as="geometry" />
+        </mxCell>
+        <mxCell id="c_auth" value="AuthController&#xa;POST /api/auth/login (issues JWT, 1h)" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#ffffff;strokeColor=#6c8ebf;" vertex="1" parent="cards">
+          <mxGeometry x="20" y="45" width="260" height="45" as="geometry" />
+        </mxCell>
+        <mxCell id="c_ctrl" value="CardController&#xa;/api/cards  CRUD" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#ffffff;strokeColor=#6c8ebf;" vertex="1" parent="cards">
+          <mxGeometry x="20" y="105" width="260" height="45" as="geometry" />
+        </mxCell>
+        <mxCell id="c_listener" value="TransferCompletedListener&#xa;apply transfer: debit/credit balances (idempotent)" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#ffffff;strokeColor=#6c8ebf;" vertex="1" parent="cards">
+          <mxGeometry x="20" y="165" width="260" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="c_pub" value="TransferFailedPublisher&#xa;publishes on rejection" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#ffffff;strokeColor=#6c8ebf;" vertex="1" parent="cards">
+          <mxGeometry x="20" y="235" width="260" height="45" as="geometry" />
+        </mxCell>
+
+        <mxCell id="payment" value="payment service  :8081" style="swimlane;whiteSpace=wrap;html=0;startSize=30;rounded=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="720" y="130" width="340" height="300" as="geometry" />
+        </mxCell>
+        <mxCell id="p_ctrl" value="TransferController&#xa;POST / GET /api/transfers" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#ffffff;strokeColor=#82b366;" vertex="1" parent="payment">
+          <mxGeometry x="20" y="45" width="300" height="45" as="geometry" />
+        </mxCell>
+        <mxCell id="p_svc" value="TransferService&#xa;validate cards via cards service,&#xa;save Transfer + outbox event in one transaction" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#ffffff;strokeColor=#82b366;" vertex="1" parent="payment">
+          <mxGeometry x="20" y="105" width="300" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="p_relay" value="OutboxRelay&#xa;polls outbox_events every 500 ms, sends to Kafka" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#ffffff;strokeColor=#82b366;" vertex="1" parent="payment">
+          <mxGeometry x="20" y="180" width="300" height="45" as="geometry" />
+        </mxCell>
+        <mxCell id="p_listener" value="TransferFailedListener&#xa;transfer status -&gt; FAILED" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#ffffff;strokeColor=#82b366;" vertex="1" parent="payment">
+          <mxGeometry x="20" y="240" width="300" height="45" as="geometry" />
+        </mxCell>
+
+        <mxCell id="cardsdb" value="cards-db&#xa;Postgres&#xa;cards, processed_transfers" style="shape=cylinder3;whiteSpace=wrap;html=0;boundedLbl=1;backgroundOutline=1;size=12;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="250" y="470" width="150" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="paydb" value="payment-db&#xa;Postgres&#xa;transfers, outbox_events" style="shape=cylinder3;whiteSpace=wrap;html=0;boundedLbl=1;backgroundOutline=1;size=12;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="900" y="470" width="150" height="100" as="geometry" />
+        </mxCell>
+
+        <mxCell id="kafka" value="Kafka  (KRaft, single node)" style="swimlane;whiteSpace=wrap;html=0;startSize=30;rounded=1;fillColor=#f8cecc;strokeColor=#b85450;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="440" y="470" width="440" height="150" as="geometry" />
+        </mxCell>
+        <mxCell id="t_completed" value="topic&#xa;transfer.completed" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#ffffff;strokeColor=#b85450;" vertex="1" parent="kafka">
+          <mxGeometry x="20" y="55" width="190" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="t_failed" value="topic&#xa;transfer.failed" style="rounded=1;whiteSpace=wrap;html=0;fillColor=#ffffff;strokeColor=#b85450;" vertex="1" parent="kafka">
+          <mxGeometry x="230" y="55" width="190" height="60" as="geometry" />
+        </mxCell>
+
+        <mxCell id="e1" value="1. POST /api/auth/login  -&gt; JWT" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;strokeColor=#6c8ebf;" edge="1" parent="1" source="client" target="c_auth">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e2" value="2. POST /api/transfers&#xa;Authorization: Bearer JWT" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;strokeColor=#82b366;" edge="1" parent="1" source="client" target="p_ctrl">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e3" value="3. GET /api/cards/{id}&#xa;(forwarded JWT)" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;strokeColor=#333333;" edge="1" parent="1" source="p_svc" target="c_ctrl">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e4" value="4. Transfer + outbox_events&#xa;(one transaction)" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;strokeColor=#d6b656;" edge="1" parent="1" source="payment" target="paydb">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e5" value="5. publish" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;strokeColor=#b85450;" edge="1" parent="1" source="p_relay" target="t_completed">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e6" value="6. consume" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;strokeColor=#b85450;" edge="1" parent="1" source="t_completed" target="c_listener">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e7" value="update balances" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;strokeColor=#d6b656;" edge="1" parent="1" source="cards" target="cardsdb">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e8" value="7. publish on rejection" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;strokeColor=#b85450;" edge="1" parent="1" source="c_pub" target="t_failed">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e9" value="8. consume" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;strokeColor=#b85450;" edge="1" parent="1" source="t_failed" target="p_listener">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

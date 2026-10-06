@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="001-create-transfers-table" author="payment">
+        <createTable tableName="transfers">
+            <column name="transfer_id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="from_card_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="to_card_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="amount" type="NUMERIC(19, 2)">
+                <constraints nullable="false"/>
+            </column>
+            <!-- known only if the source card was found -->
+            <column name="currency" type="VARCHAR(3)"/>
+            <column name="status" type="VARCHAR(10)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="failure_reason" type="VARCHAR(255)"/>
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="now()">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createIndex tableName="transfers" indexName="idx_transfers_from_card_id">
+            <column name="from_card_id"/>
+        </createIndex>
+        <createIndex tableName="transfers" indexName="idx_transfers_to_card_id">
+            <column name="to_card_id"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>

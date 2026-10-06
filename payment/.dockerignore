@@ -1,0 +1,6 @@
+target
+.idea
+.claude
+.git
+*.log
+app.pid

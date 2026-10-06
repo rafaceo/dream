@@ -1,0 +1,20 @@
+# build output
+target/
+build/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# logs and runtime files
+*.log
+*.pid
+
+# local environment and secrets
+.env
+.env.*
+
+# tooling
+.claude/
+HELP.md

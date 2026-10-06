@@ -1,0 +1,15 @@
+services:
+  postgres:
+    image: postgres:17
+    container_name: cards-postgres
+    environment:
+      POSTGRES_DB: cards
+      POSTGRES_USER: cards
+      POSTGRES_PASSWORD: cards
+    ports:
+      - "5432:5432"
+    volumes:
+      - cards-postgres-data:/var/lib/postgresql/data
+
+volumes:
+  cards-postgres-data:

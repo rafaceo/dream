@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="003-add-display-name" author="cards">
+        <addColumn tableName="cards">
+            <column name="display_name" type="VARCHAR(20)" defaultValue="VISA">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <!-- one-time data fix: the cards that existed at this point all belong to a single owner -->
+    <changeSet id="003-assign-single-owner-to-existing-cards" author="cards">
+        <sql>UPDATE cards SET owner_id = '207db44c-8be7-419a-8556-ad786070b52b'</sql>
+    </changeSet>
+
+</databaseChangeLog>

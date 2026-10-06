@@ -1,0 +1,102 @@
+# Runs the whole system: docker compose up --build
+#   cards   -> http://localhost:8080/swagger-ui.html
+#   payment -> http://localhost:8081/swagger-ui.html
+name: dream
+
+services:
+  cards-db:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: cards
+      POSTGRES_USER: cards
+      POSTGRES_PASSWORD: cards
+    ports:
+      - "${CARDS_DB_PORT:-5432}:5432"
+    volumes:
+      - cards-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cards -d cards"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  payment-db:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: payment
+      POSTGRES_USER: payment
+      POSTGRES_PASSWORD: payment
+    ports:
+      - "${PAYMENT_DB_PORT:-5434}:5432"
+    volumes:
+      - payment-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U payment -d payment"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  # single-node Kafka (KRaft): localhost:9092 for the host, kafka:29092 for containers
+  kafka:
+    image: apache/kafka:3.9.0
+    ports:
+      - "${KAFKA_PORT:-9092}:9092"
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://:9092,INTERNAL://:29092,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:${KAFKA_PORT:-9092},INTERNAL://kafka:29092
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,INTERNAL:PLAINTEXT
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@localhost:9093
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server kafka:29092 > /dev/null 2>&1"]
+      interval: 10s
+      timeout: 10s
+      retries: 20
+      start_period: 15s
+
+  cards:
+    build: ./cards
+    depends_on:
+      cards-db:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://cards-db:5432/cards
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      APP_JWT_SECRET: ${APP_JWT_SECRET:-dev-only-change-me-dev-only-change-me-0123456789}
+      APP_AUTH_USERNAME: ${APP_AUTH_USERNAME:-admin}
+      APP_AUTH_PASSWORD: ${APP_AUTH_PASSWORD:-admin}
+      APP_CARD_NUMBER_HASH_SECRET: ${APP_CARD_NUMBER_HASH_SECRET:-dev-only-change-me}
+    ports:
+      - "${CARDS_PORT:-8080}:8080"
+    restart: unless-stopped
+
+  payment:
+    build: ./payment
+    depends_on:
+      payment-db:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      cards:
+        condition: service_started
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://payment-db:5432/payment
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      CARDS_BASE_URL: http://cards:8080
+      APP_JWT_SECRET: ${APP_JWT_SECRET:-dev-only-change-me-dev-only-change-me-0123456789}
+    ports:
+      - "${PAYMENT_PORT:-8081}:8081"
+    restart: unless-stopped
+
+volumes:
+  cards-db-data:
+  payment-db-data:

@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="004-add-card-number-hash" author="cards">
+        <addColumn tableName="cards">
+            <column name="card_number_hash" type="VARCHAR(64)"/>
+        </addColumn>
+
+        <!--
+            Full numbers of existing cards were never stored (only the masked value), so their real hash
+            cannot be computed. Backfill with a hash of the masked value just to satisfy NOT NULL / UNIQUE;
+            duplicates of these legacy cards by full number cannot be detected.
+        -->
+        <sql>UPDATE cards SET card_number_hash = encode(sha256(convert_to(card_number, 'UTF8')), 'hex')
+              WHERE card_number_hash IS NULL</sql>
+
+        <addNotNullConstraint tableName="cards" columnName="card_number_hash" columnDataType="VARCHAR(64)"/>
+        <addUniqueConstraint tableName="cards" columnNames="card_number_hash"
+                             constraintName="uq_cards_card_number_hash"/>
+    </changeSet>
+
+</databaseChangeLog>
